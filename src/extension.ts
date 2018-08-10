@@ -1,5 +1,5 @@
 import { createWebWorkerMessageTransports } from 'cxp/module/jsonrpc2/transports/webWorker'
-import { InitializeResult, InitializeParams } from 'cxp/module/protocol'
+import { InitializeResult } from 'cxp/module/protocol'
 import {
     TextDocumentDecoration,
     ExecuteCommandParams,
@@ -55,7 +55,7 @@ export function run(connection: Connection): void {
     })
 
     connection.onInitialize(
-        (params: InitializeParams & { originalRootUri?: string }) => {
+        () => {
             return {
                 capabilities: {
                     textDocumentSync: {
