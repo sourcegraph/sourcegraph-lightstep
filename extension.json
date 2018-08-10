@@ -1,0 +1,66 @@
+{
+  "title": "LightStep",
+  "description": "Shows code coverage from LightStep",
+  "platform": {
+    "type": "bundle",
+    "url": "http://localhost:1234/cx-lightstep.js"
+  },
+  "activationEvents": ["*"],
+  "contributes": {
+    "configuration": {
+      "title": "LightStep settings",
+      "properties": {
+        "lightstep.decorations": {
+          "description":
+            "Configures the appearance of code coverage on a code file.",
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "hide": {
+              "description": "Hide all of the code coverage decorations.",
+              "type": "boolean"
+            },
+            "lineBackgroundColors": {
+              "description":
+                "Whether to decorate each line with a background color based on its coverage.",
+              "type": "boolean"
+            },
+            "lineHitCounts": {
+              "description":
+                "Whether to decorate the end of each covered line with the hit/branch stats.",
+              "type": "boolean"
+            }
+          }
+        },
+        "lightstep.endpoints": {
+          "description":
+            "The list of LightStep endpoints that are contacted to retrieve coverage data, in order. If empty or not set, https://lightstep.io is used.",
+          "type": "array",
+          "items": {
+            "description":
+              "A LightStep endpoint (either https://lightstep.io or LightStep Enterprise).",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "url": {
+                "description": "The URL for this LightStep endpoint.",
+                "type": "string",
+                "format": "uri",
+                "default": "https://lightstep.io",
+                "examples": [
+                  "https://lightstep.io",
+                  "https://lightstep.example.com"
+                ]
+              },
+              "token": {
+                "description":
+                  "The LightStep API token for this endpoint (required for private repositories).",
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
