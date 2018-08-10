@@ -6,7 +6,6 @@ import {
     ConfigurationUpdateRequest,
     MenuItemContribution,
     ConfigurationUpdateParams,
-    CommandContribution,
     Contributions,
     DidChangeConfigurationParams,
     RegistrationRequest,
@@ -18,22 +17,25 @@ import { Connection, createConnection } from 'cxp/module/server/server'
 import { TextDocuments } from 'cxp/module/server/features/textDocumentSync'
 import { isEqual } from 'cxp/module/util'
 import { TextDocument } from 'vscode-languageserver-types/lib/umd/main'
-import { iconURL } from './icon'
-import { Settings, resolveSettings } from './settings'
-import { Model } from './model'
-import { lightstepToDecorations } from './decoration'
-import { hsla, GREEN_HUE, RED_HUE } from './colors'
-import { resolveURI, ResolvedURI } from './uri'
+import { LIGHTSTEP_ICON_URL } from './icon'
 
-const TOGGLE_ALL_DECORATIONS_COMMAND_ID = 'lightstep.decorations.toggleAll'
-const TOGGLE_HITS_DECORATIONS_COMMAND_ID = 'lightstep.decorations.hits.toggle'
-const VIEW_COVERAGE_DETAILS_COMMAND_ID = 'lightstep.viewCoverageDetails'
-const SET_API_TOKEN_COMMAND_ID = 'lightstep.setAPIToken'
-const HELP_COMMAND_ID = 'lightstep.help'
+/**
+ * The settings for this extension. See the configuration JSON Schema in extension.json for the canonical
+ * documentation for these properties.
+ */
+export interface Settings {
+    ['lightstep.decorations']?: boolean
+    ['lightstep.project']?: string
+}
+
+/** The regexp that matches "start span" calls. */
+const START_SPAN_PATTERN = /start_?span[^"']+["']([^"']+)["']/gi
+
+const TOGGLE_DECORATIONS_COMMAND_ID = 'lightstep.decorations.toggle'
+const SET_PROJECT_NAME_COMMAND_ID = 'lightstep.setProjectName'
+const LIGHTSTEP_BRAND_COLOR = '#2d36fb'
 
 export function run(connection: Connection): void {
-    let initialized = false
-    let root: Pick<ResolvedURI, 'repo' | 'rev'> | null = null
     let settings: Settings | undefined
     let lastOpenedTextDocument: TextDocument | undefined
 
@@ -54,17 +56,6 @@ export function run(connection: Connection): void {
 
     connection.onInitialize(
         (params: InitializeParams & { originalRootUri?: string }) => {
-            if (initialized) {
-                throw new Error('already initialized')
-            }
-            initialized = true
-
-            // Use original root if proxied so we know which repository/revision this is for.
-            const rootStr = params.originalRootUri || params.root || undefined
-            if (rootStr) {
-                root = resolveURI(null, rootStr)
-            }
-
             return {
                 capabilities: {
                     textDocumentSync: {
@@ -72,11 +63,8 @@ export function run(connection: Connection): void {
                     },
                     executeCommandProvider: {
                         commands: [
-                            TOGGLE_ALL_DECORATIONS_COMMAND_ID,
-                            TOGGLE_HITS_DECORATIONS_COMMAND_ID,
-                            VIEW_COVERAGE_DETAILS_COMMAND_ID,
-                            SET_API_TOKEN_COMMAND_ID,
-                            HELP_COMMAND_ID,
+                            TOGGLE_DECORATIONS_COMMAND_ID,
+                            SET_PROJECT_NAME_COMMAND_ID,
                         ],
                     },
                     decorationProvider: { dynamic: true },
@@ -87,9 +75,7 @@ export function run(connection: Connection): void {
 
     connection.onDidChangeConfiguration(
         async (params: DidChangeConfigurationParams) => {
-            const newSettings: Settings = resolveSettings(
-                params.settings.merged
-            ) // merged is (global + org + user) settings
+            const newSettings: Settings = params.settings.merged
             if (isEqual(settings, newSettings)) {
                 return // nothing to do
             }
@@ -108,15 +94,9 @@ export function run(connection: Connection): void {
             await publishDecorations(settings, [document])
         }
     })
-    textDocuments.onDidClose(async ({ document }) => {
+    textDocuments.onDidClose(async () => {
         if (settings) {
-            // TODO!(sqs): wait to clear to avoid jitter, but we do need to eventually clear to avoid
-            // showing this on non-files (such as dirs), until we get true 'when' support.
-            setTimeout(() => {
-                if (!lastOpenedTextDocument) {
-                    registerContributions(settings!)
-                }
-            })
+            registerContributions(settings)
         }
     })
 
@@ -138,70 +118,39 @@ export function run(connection: Connection): void {
         }
 
         switch (params.command) {
-            case TOGGLE_ALL_DECORATIONS_COMMAND_ID:
-            case TOGGLE_HITS_DECORATIONS_COMMAND_ID:
+            case TOGGLE_DECORATIONS_COMMAND_ID:
                 if (!settings) {
                     throw new Error('settings are not yet available')
                 }
-                if (!settings['lightstep.decorations']) {
-                    settings['lightstep.decorations'] = {}
-                }
-                switch (params.command) {
-                    case TOGGLE_ALL_DECORATIONS_COMMAND_ID:
-                        settings['lightstep.decorations'].hide = settings[
-                            'lightstep.decorations'
-                        ].hide
-                            ? undefined
-                            : true
-                        executeConfigurationCommand(settings, {
-                            path: ['lightstep.decorations', 'hide'],
-                            value: settings['lightstep.decorations'].hide || null,
-                        })
-                        break
-                    case TOGGLE_HITS_DECORATIONS_COMMAND_ID:
-                        settings[
-                            'lightstep.decorations'
-                        ].lineHitCounts = !settings['lightstep.decorations']
-                            .lineHitCounts
-                        executeConfigurationCommand(settings, {
-                            path: ['lightstep.decorations', 'lineHitCounts'],
-                            value:
-                                settings['lightstep.decorations'].lineHitCounts ||
-                                null,
-                        })
-                        break
-                }
+                settings['lightstep.decorations'] = !(
+                    settings['lightstep.decorations'] !== false
+                )
+                executeConfigurationCommand(settings, {
+                    path: ['lightstep.decorations'],
+                    value: settings['lightstep.decorations'],
+                })
                 break
 
-            case VIEW_COVERAGE_DETAILS_COMMAND_ID:
-                break
-
-            case SET_API_TOKEN_COMMAND_ID:
+            case SET_PROJECT_NAME_COMMAND_ID:
                 if (!settings) {
                     throw new Error('settings are not available')
                 }
-                const endpoint = settings['lightstep.endpoints'][0]
                 connection.window
                     .showInputRequest(
-                        `LightStep API token (for private repositories on ${
-                            endpoint.url
-                        }):`,
-                        endpoint.token
+                        'LightStep project name:',
+                        settings['lightstep.project']
                     )
-                    .then(token => {
-                        if (token !== null) {
+                    .then(projectName => {
+                        if (projectName !== null) {
                             return executeConfigurationCommand(settings!, {
-                                path: ['lightstep.endpoints', 0, 'token'],
-                                value: token || null, // '' will remove, as desired
+                                path: ['lightstep.project'],
+                                value: projectName || null, // '' will remove, as desired
                             })
                         }
                     })
                     .catch(err =>
-                        console.error(`${SET_API_TOKEN_COMMAND_ID}:`, err)
+                        console.error(`${SET_PROJECT_NAME_COMMAND_ID}:`, err)
                     )
-
-            case HELP_COMMAND_ID:
-                break
 
             default:
                 throw new Error(`unknown command: ${params.command}`)
@@ -214,95 +163,63 @@ export function run(connection: Connection): void {
             commands: [],
             menus: { 'editor/title': [], commandPalette: [], help: [] },
         }
-        if (lastOpenedTextDocument) {
-            let ratio: number | undefined
-            try {
-                ratio = await Model.getFileCoverageRatio(
-                    resolveURI(root, lastOpenedTextDocument.uri),
-                    settings
-                )
-            } catch (err) {
-                connection.console.error(
-                    `Error computing file coverage ratio for ${
-                        lastOpenedTextDocument.uri
-                    }: ${err}`
-                )
-            }
-            if (ratio !== undefined) {
-                contributions.commands!.push({
-                    command: TOGGLE_ALL_DECORATIONS_COMMAND_ID,
-                    title: `${
-                        settings['lightstep.decorations'].hide ? 'Show' : 'Hide'
-                    } inline code coverage decorations on file`,
-                    category: 'LightStep',
-                    toolbarItem: {
-                        label: ratio
-                            ? `Coverage: ${ratio.toFixed(0)}%`
-                            : 'Coverage',
-                        description: `LightStep: ${
-                            !settings['lightstep.decorations'] ||
-                            !settings['lightstep.decorations'].hide
-                                ? 'Hide'
-                                : 'Show'
-                        } code coverage`,
-                        iconURL:
-                            ratio !== undefined
-                                ? iconURL(iconColor(ratio))
-                                : undefined,
-                        iconDescription:
-                            'LightStep logo with red, yellow, or green color indicating the file coverage ratio',
-                    },
-                })
-                const menuItem: MenuItemContribution = {
-                    command: TOGGLE_ALL_DECORATIONS_COMMAND_ID,
-                }
-                contributions.menus!['editor/title']!.push(menuItem)
-                contributions.menus!['commandPalette']!.push(menuItem)
-            }
-        }
 
-        // Always add global commands.
-        const globalCommands: {
-            command: CommandContribution
-            menuItem: MenuItemContribution
-        }[] = [
-            {
-                command: {
-                    command: TOGGLE_HITS_DECORATIONS_COMMAND_ID,
-                    title: 'Toggle line hit/branch counts',
-                    category: 'LightStep',
+        // Trace links toggle.
+        if (lastOpenedTextDocument && settings['lightstep.project']) {
+            contributions.commands!.push({
+                command: TOGGLE_DECORATIONS_COMMAND_ID,
+                title: `${
+                    settings['lightstep.decorations'] === false
+                        ? 'Show'
+                        : 'Hide'
+                } inline trace links`,
+                category: 'LightStep',
+                toolbarItem: {
+                    label: '',
+                    description: `LightStep: ${
+                        settings['lightstep.decorations'] === false
+                            ? 'Show'
+                            : 'Hide'
+                    } trace links`,
+                    iconURL: LIGHTSTEP_ICON_URL,
+                    iconDescription: 'LightStep logo',
                 },
-                menuItem: { command: TOGGLE_HITS_DECORATIONS_COMMAND_ID },
-            },
-            {
-                command: {
-                    command: VIEW_COVERAGE_DETAILS_COMMAND_ID,
-                    title: 'View coverage details',
-                    category: 'LightStep',
-                },
-                menuItem: { command: VIEW_COVERAGE_DETAILS_COMMAND_ID },
-            },
-            {
-                command: {
-                    command: SET_API_TOKEN_COMMAND_ID,
-                    title: 'Set API token for private repositories...',
-                    category: 'LightStep',
-                },
-                menuItem: { command: SET_API_TOKEN_COMMAND_ID },
-            },
-        ]
-        for (const { command, menuItem } of globalCommands) {
-            contributions.commands!.push(command)
+            })
+            const menuItem: MenuItemContribution = {
+                command: TOGGLE_DECORATIONS_COMMAND_ID,
+            }
+            if (START_SPAN_PATTERN.test(lastOpenedTextDocument.getText())) {
+                contributions.menus!['editor/title']!.push(menuItem)
+            }
             contributions.menus!['commandPalette']!.push(menuItem)
         }
 
+        // Project name prompt.
         contributions.commands!.push({
-            command: HELP_COMMAND_ID,
-            title: 'Documentation and support',
+            command: SET_PROJECT_NAME_COMMAND_ID,
+            title: settings['lightstep.project']
+                ? `Switch project (${settings['lightstep.project']})`
+                : 'Set project name',
             category: 'LightStep',
-            iconURL: iconURL(),
+            toolbarItem: {
+                label: 'Configure LightStep',
+                description:
+                    'Set LightStep project name to show trace links...',
+                iconURL: LIGHTSTEP_ICON_URL,
+                iconDescription: 'LightStep logo',
+            },
         })
-        contributions.menus!['help']!.push({ command: HELP_COMMAND_ID })
+        const projectNameMenuItem: MenuItemContribution = {
+            command: SET_PROJECT_NAME_COMMAND_ID,
+        }
+        contributions.menus!['commandPalette']!.push(projectNameMenuItem)
+        if (
+            lastOpenedTextDocument &&
+            START_SPAN_PATTERN.test(lastOpenedTextDocument.getText()) &&
+            !settings['lightstep.project']
+        ) {
+            contributions.menus!['editor/title']!.push(projectNameMenuItem)
+        }
 
         await connection.sendRequest(RegistrationRequest.type, {
             registrations: [
@@ -321,35 +238,58 @@ export function run(connection: Connection): void {
         settings: Settings,
         documents: TextDocument[]
     ): Promise<void> {
-        for (const { uri } of documents) {
+        for (const doc of documents) {
             connection.sendNotification(
                 TextDocumentPublishDecorationsNotification.type,
                 {
-                    textDocument: { uri },
-                    decorations: await getDecorations(root, settings, uri),
+                    textDocument: { uri: doc.uri },
+                    decorations: await getDecorations(doc, settings),
                 } as TextDocumentPublishDecorationsParams
             )
         }
     }
 
-    async function getDecorations(
-        root: Pick<ResolvedURI, 'repo' | 'rev'> | null,
-        settings: Settings,
-        uri: string
-    ): Promise<TextDocumentDecoration[]> {
-        const { hide, ...decorationSettings } = settings['lightstep.decorations']
-        if (hide) {
+    function getDecorations(
+        doc: TextDocument,
+        settings: Settings
+    ): TextDocumentDecoration[] {
+        const projectName = settings['lightstep.project']
+        if (settings['lightstep.decorations'] === false || !projectName) {
             return []
         }
-        return lightstepToDecorations(
-            decorationSettings,
-            await Model.getFileLineCoverage(resolveURI(root, uri), settings)
-        )
+        const decorations: TextDocumentDecoration[] = []
+        for (const [i, line] of doc
+            .getText()
+            .split('\n')
+            .entries()) {
+            let m: RegExpExecArray | null
+            do {
+                m = START_SPAN_PATTERN.exec(line)
+                if (m) {
+                    decorations.push({
+                        range: {
+                            start: { line: i, character: 0 },
+                            end: { line: i, character: 0 },
+                        },
+                        after: {
+                            backgroundColor: LIGHTSTEP_BRAND_COLOR,
+                            color: 'rgba(255, 255, 255, 0.8)',
+                            contentText: 'Live traces (LightStep) » ',
+                            linkURL: liveTracesURL(projectName, m[1]),
+                        },
+                    })
+                }
+            } while (m)
+            START_SPAN_PATTERN.lastIndex = 0 // reset
+        }
+        return decorations
     }
 }
 
-function iconColor(coverageRatio: number): string {
-    return hsla(coverageRatio * ((GREEN_HUE - RED_HUE) / 100), 0.25, 1)
+export function liveTracesURL(projectName: string, spanName: string): string {
+    return `https://app.lightstep.com/${encodeURIComponent(
+        projectName
+    )}/live?q=${encodeURIComponent(`operation:${JSON.stringify(spanName)}`)}`
 }
 
 const connection = createConnection(

@@ -1,6 +1,6 @@
 # LightStep CXP extension (WIP)
 
-See code coverage information from [LightStep](https://lightstep.io) on GitHub and any other platform that supports the [Code Extension Protocol (CXP)](https://github.com/sourcegraph/cxp-js).
+See [LightStep](https://lightstep.io) trace links in your code, on GitHub and any other platform that supports the [Code Extension Protocol (CXP)](https://github.com/sourcegraph/cxp-js).
 
 **NOTE:** This repository's history will be rewritten before being published.
 
@@ -15,4 +15,4 @@ See code coverage information from [LightStep](https://lightstep.io) on GitHub a
         ...
     }
     ```
-1.  Enable the extension and visit a file such as http://localhost:3080/github.com/theupdateframework/notary/-/blob/tuf/signed/sign.go that has LightStep coverage data. You should see lines colors green, yellow, and red.
+1.  Enable the extension and visit a file such as http://localhost:3080/github.com/sourcegraph/go-langserver@bf90fac03a4d1a07f50701547d56fabfdb0c32ec/-/blob/langserver/loader.go#L29:30 or http://localhost:3080/github.com/sourcegraph/javascript-typescript-langserver@50df3752f631abca884e2a41426c1f70afa07ca8/-/blob/src/connection.ts#L236:29 that has LightStep "start span" calls. You should see a link after each such line.
