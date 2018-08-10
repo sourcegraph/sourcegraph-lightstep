@@ -3,7 +3,7 @@
   "description": "Shows links to LightStep traces",
   "platform": {
     "type": "bundle",
-    "url": "http://localhost:38459/cx-lightstep.js"
+    "url": "https://storage.googleapis.com/sourcegraph-cx-dev/cx-lightstep.js"
   },
   "activationEvents": ["*"],
   "contributes": {
