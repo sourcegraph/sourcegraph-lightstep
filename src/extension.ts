@@ -54,28 +54,26 @@ export function run(connection: Connection): void {
         }
     })
 
-    connection.onInitialize(
-        () => {
-            return {
-                capabilities: {
-                    textDocumentSync: {
-                        openClose: true,
-                    },
-                    executeCommandProvider: {
-                        commands: [
-                            TOGGLE_DECORATIONS_COMMAND_ID,
-                            SET_PROJECT_NAME_COMMAND_ID,
-                        ],
-                    },
-                    decorationProvider: { dynamic: true },
+    connection.onInitialize(() => {
+        return {
+            capabilities: {
+                textDocumentSync: {
+                    openClose: true,
                 },
-            } as InitializeResult
-        }
-    )
+                executeCommandProvider: {
+                    commands: [
+                        TOGGLE_DECORATIONS_COMMAND_ID,
+                        SET_PROJECT_NAME_COMMAND_ID,
+                    ],
+                },
+                decorationProvider: { dynamic: true },
+            },
+        } as InitializeResult
+    })
 
     connection.onDidChangeConfiguration(
         async (params: DidChangeConfigurationParams) => {
-            const newSettings: Settings = params.settings.merged
+            const newSettings: Settings = params.configurationCascade.merged
             if (isEqual(settings, newSettings)) {
                 return // nothing to do
             }
@@ -174,7 +172,7 @@ export function run(connection: Connection): void {
                         : 'Hide'
                 } inline trace links`,
                 category: 'LightStep',
-                toolbarItem: {
+                actionItem: {
                     label: '',
                     description: `LightStep: ${
                         settings['lightstep.decorations'] === false
@@ -201,7 +199,7 @@ export function run(connection: Connection): void {
                 ? `Switch project (${settings['lightstep.project']})`
                 : 'Set project name',
             category: 'LightStep',
-            toolbarItem: {
+            actionItem: {
                 label: 'Configure LightStep',
                 description:
                     'Set LightStep project name to show trace links...',
