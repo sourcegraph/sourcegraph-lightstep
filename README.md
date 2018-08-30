@@ -2,6 +2,8 @@
 
 See [LightStep](https://lightstep.io) trace links in your code, on GitHub and any other platform that supports the [Code Extension Protocol (CXP)](https://github.com/sourcegraph/cxp-js).
 
+![](screenshot.png)
+
 **NOTE:** This repository's history will be rewritten before being published.
 
 ## EXPERIMENTAL: Usage instructions (currently only for Sourcegraphers)
