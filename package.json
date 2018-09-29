@@ -1,0 +1,24 @@
+{
+  "name": "lightstep",
+  "publisher": "felixfbecker",
+  "title": "Hello, world!",
+  "description": "Shows a friendly 'Hello, world!' message when you hover over code.",
+  "activationEvents": [
+    "*"
+  ],
+  "main": "dist/extension.js",
+  "scripts": {
+    "sourcegraph:prepublish": "parcel build src/extension.ts"
+  },
+  "devDependencies": {
+    "@sourcegraph/prettierrc": "^2.2.0",
+    "@sourcegraph/tsconfig": "^3.0.0",
+    "@sourcegraph/tslint-config": "^12.0.0",
+    "parcel-bundler": "^1.9.7",
+    "prettier": "^1.14.3",
+    "sourcegraph": "^18.0.0",
+    "tslint": "^5.11.0",
+    "typescript": "^3.0.3"
+  },
+  "dependencies": {}
+}
