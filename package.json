@@ -1,8 +1,8 @@
 {
   "name": "lightstep",
   "publisher": "felixfbecker",
-  "title": "Hello, world!",
-  "description": "Shows a friendly 'Hello, world!' message when you hover over code.",
+  "title": "LightStep",
+  "description": "Links OpenTracing instrumentation to LightStep live trace views",
   "activationEvents": [
     "*"
   ],
