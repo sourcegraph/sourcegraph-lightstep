@@ -1,8 +1,21 @@
 {
   "name": "lightstep",
-  "publisher": "felixfbecker",
-  "title": "LightStep",
-  "description": "Links OpenTracing instrumentation to LightStep live trace views",
+  "publisher": "sqs",
+  "description": "Links OpenTracing instrumentation calls to LightStep live trace views",
+  "wip": true,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sourcegraph/sourcegraph-lightstep"
+  },
+  "categories": [
+    "External services"
+  ],
+  "tags": [
+    "lightstep",
+    "opentracing",
+    "tracing",
+    "perf"
+  ],
   "activationEvents": [
     "*"
   ],
