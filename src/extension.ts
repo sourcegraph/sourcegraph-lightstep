@@ -4,15 +4,25 @@ const START_SPAN_PATTERN = /start_?span\(['"]([^'"]+)['"]/gi
 
 export function activate(): void {
     sourcegraph.workspace.onDidOpenTextDocument.subscribe(textDocument => {
-        decorateEditors(
-            sourcegraph.app.activeWindow!.visibleViewComponents.filter(
-                viewComp => viewComp.document.uri === textDocument.uri
+        if (sourcegraph.app.activeWindow) {
+            decorateEditors(
+                sourcegraph.app.activeWindow!.visibleViewComponents.filter(
+                    viewComp => viewComp.document.uri === textDocument.uri
+                )
             )
-        )
+        }
     })
 
-    sourcegraph.configuration.subscribe(() => {
+    setTimeout(() => {
+if (sourcegraph.app.activeWindow) {
         decorateEditors(sourcegraph.app.activeWindow!.visibleViewComponents)
+    }
+}, 500)
+
+    sourcegraph.configuration.subscribe(() => {
+        if (sourcegraph.app.activeWindow) {
+            decorateEditors(sourcegraph.app.activeWindow!.visibleViewComponents)
+        }
     })
 
     function decorateEditors(editorsToUpdate: sourcegraph.CodeEditor[]): void {
