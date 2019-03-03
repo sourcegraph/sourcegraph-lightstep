@@ -18,7 +18,7 @@ export function activate(): void {
     })
 
     function decorateEditors(editorsToUpdate: sourcegraph.CodeEditor[]): void {
-        const projectName = sourcegraph.configuration.get().value['lightStep.projectName']
+        const projectName = sourcegraph.configuration.get().value['lightstep.projectName']
         for (const editor of editorsToUpdate) {
             const decorations: sourcegraph.TextDocumentDecoration[] = []
             for (const [i, line] of editor.document.text.split('\n').entries()) {
