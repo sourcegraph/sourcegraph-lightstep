@@ -4,6 +4,8 @@
     "target": "es2018",
     "module": "esnext",
     "moduleResolution": "node",
-    "lib": ["es2018", "webworker"]
+    "lib": ["es2018", "webworker"],
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true
   }
 }
