@@ -22,6 +22,20 @@
   "contributes": {
     "actions": [
       {
+        "id": "lightstep.toggleSpanReferences",
+        "command": "updateConfiguration",
+        "commandArguments": [
+          [
+            "lightstep.hideSpanReferences"
+          ],
+          "${!config.lightstep.hideSpanReferences}",
+          null,
+          "json"
+        ],
+        "title": "${config.lightstep.hideSpanReferences && \"Show\" || \"Hide\"} trace links",
+        "category": "LightStep"
+      },
+      {
         "id": "lightstep.setProjectName",
         "command": "lightstep.setProjectName",
         "title": "Set project name",
@@ -37,6 +51,7 @@
         {"action": "lightstep.setProjectName", "when": "!config.lightstep.projectName && lightstep.needsProjectName"}
       ],
       "commandPalette": [
+        {"action": "lightstep.toggleSpanReferences"},
         {"action": "lightstep.setProjectName"}
       ]
     },
