@@ -20,10 +20,25 @@
     "*"
   ],
   "contributes": {
-    "actions": [],
+    "actions": [
+      {
+        "id": "lightstep.setProjectName",
+        "command": "lightstep.setProjectName",
+        "title": "Set project name",
+        "category": "LightStep",
+        "actionItem": {
+          "label": "⚠️ Set LightStep project",
+          "description": "Set your LightStep project name to view links to LightStep live traces."
+        }
+      }
+    ],
     "menus": {
-      "editor/title": [],
-      "commandPalette": []
+      "editor/title": [
+        {"action": "lightstep.setProjectName", "when": "!config.lightstep.projectName && lightstep.needsProjectName"}
+      ],
+      "commandPalette": [
+        {"action": "lightstep.setProjectName"}
+      ]
     },
     "configuration": {
       "title": "LightStep configuration",
