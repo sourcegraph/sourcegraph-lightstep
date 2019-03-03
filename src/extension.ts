@@ -6,17 +6,21 @@ const DECORATION_TYPE = sourcegraph.app.createDecorationType()
 export function activate(ctx: sourcegraph.ExtensionContext): void {
     ctx.subscriptions.add(
         sourcegraph.workspace.onDidOpenTextDocument.subscribe(textDocument => {
-            decorateEditors(
-                sourcegraph.app.activeWindow!.visibleViewComponents.filter(
-                    viewComp => viewComp.document.uri === textDocument.uri
+            if (sourcegraph.app.activeWindow) {
+                decorateEditors(
+                    sourcegraph.app.activeWindow.visibleViewComponents.filter(
+                        viewComp => viewComp.document.uri === textDocument.uri
+                    )
                 )
-            )
+            }
         })
     )
 
     ctx.subscriptions.add(
         sourcegraph.configuration.subscribe(() => {
-            decorateEditors(sourcegraph.app.activeWindow!.visibleViewComponents)
+            if (sourcegraph.app.activeWindow) {
+                decorateEditors(sourcegraph.app.activeWindow.visibleViewComponents)
+            }
         })
     )
 
