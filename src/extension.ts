@@ -1,6 +1,5 @@
 import * as sourcegraph from 'sourcegraph'
-
-const START_SPAN_PATTERN = /start_?span\(['"]([^'"]+)['"]/gi
+import { findSpanReferences } from './spanReferences'
 
 const DECORATION_TYPE = sourcegraph.app.createDecorationType()
 
@@ -24,28 +23,19 @@ export function activate(ctx: sourcegraph.ExtensionContext): void {
     function decorateEditors(editorsToUpdate: sourcegraph.CodeEditor[]): void {
         const projectName = sourcegraph.configuration.get().value['lightstep.projectName']
         for (const editor of editorsToUpdate) {
-            const decorations: sourcegraph.TextDocumentDecoration[] = []
-            for (const [i, line] of editor.document.text.split('\n').entries()) {
-                let m: RegExpExecArray | null
-                do {
-                    m = START_SPAN_PATTERN.exec(line)
-                    if (m) {
-                        decorations.push({
-                            range: new sourcegraph.Range(i, 0, i, 0),
-                            isWholeLine: true,
-                            after: {
-                                backgroundColor: 'blue',
-                                color: 'rgba(255, 255, 255, 0.8)',
-                                contentText: 'Live traces (LightStep) » ',
-                                linkURL: buildLiveTracesUrl(projectName, m[1]).toString(),
-                            },
-                        })
-                    }
-                } while (m)
-                START_SPAN_PATTERN.lastIndex = 0 // reset
-            }
-
-            editor.setDecorations(DECORATION_TYPE, decorations)
+            editor.setDecorations(
+                DECORATION_TYPE,
+                findSpanReferences(editor.document.text).map(({ operationName, line }) => ({
+                    range: new sourcegraph.Range(line, 0, line, 0),
+                    isWholeLine: true,
+                    after: {
+                        backgroundColor: 'blue',
+                        color: 'rgba(255, 255, 255, 0.8)',
+                        contentText: 'Live traces (LightStep) » ',
+                        linkURL: buildLiveTracesUrl(projectName, operationName).toString(),
+                    },
+                }))
+            )
         }
     }
 }
