@@ -2,6 +2,8 @@ import * as sourcegraph from 'sourcegraph'
 
 const START_SPAN_PATTERN = /start_?span\(['"]([^'"]+)['"]/gi
 
+const DECORATION_TYPE = sourcegraph.app.createDecorationType()
+
 export function activate(): void {
     sourcegraph.workspace.onDidOpenTextDocument.subscribe(textDocument => {
         decorateEditors(
@@ -39,7 +41,7 @@ export function activate(): void {
                 START_SPAN_PATTERN.lastIndex = 0 // reset
             }
 
-            editor.setDecorations(null, decorations)
+            editor.setDecorations(DECORATION_TYPE, decorations)
         }
     }
 }
