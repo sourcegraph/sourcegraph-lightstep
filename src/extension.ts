@@ -4,18 +4,22 @@ const START_SPAN_PATTERN = /start_?span\(['"]([^'"]+)['"]/gi
 
 const DECORATION_TYPE = sourcegraph.app.createDecorationType()
 
-export function activate(): void {
-    sourcegraph.workspace.onDidOpenTextDocument.subscribe(textDocument => {
-        decorateEditors(
-            sourcegraph.app.activeWindow!.visibleViewComponents.filter(
-                viewComp => viewComp.document.uri === textDocument.uri
+export function activate(ctx: sourcegraph.ExtensionContext): void {
+    ctx.subscriptions.add(
+        sourcegraph.workspace.onDidOpenTextDocument.subscribe(textDocument => {
+            decorateEditors(
+                sourcegraph.app.activeWindow!.visibleViewComponents.filter(
+                    viewComp => viewComp.document.uri === textDocument.uri
+                )
             )
-        )
-    })
+        })
+    )
 
-    sourcegraph.configuration.subscribe(() => {
-        decorateEditors(sourcegraph.app.activeWindow!.visibleViewComponents)
-    })
+    ctx.subscriptions.add(
+        sourcegraph.configuration.subscribe(() => {
+            decorateEditors(sourcegraph.app.activeWindow!.visibleViewComponents)
+        })
+    )
 
     function decorateEditors(editorsToUpdate: sourcegraph.CodeEditor[]): void {
         const projectName = sourcegraph.configuration.get().value['lightstep.projectName']
