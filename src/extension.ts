@@ -36,16 +36,24 @@ export function activate(ctx: sourcegraph.ExtensionContext): void {
             const spanReferences = findSpanReferences(editor.document.text)
             editor.setDecorations(
                 DECORATION_TYPE,
-                projectName && !hideSpanReferences
+                !hideSpanReferences
                     ? spanReferences.map(({ operationName, line }) => ({
                           range: new sourcegraph.Range(line, 0, line, 0),
                           isWholeLine: true,
-                          after: {
-                              backgroundColor: 'blue',
-                              color: 'rgba(255, 255, 255, 0.8)',
-                              contentText: 'Live traces (LightStep) » ',
-                              linkURL: buildLiveTracesUrl(projectName, operationName).toString(),
-                          },
+                          after: projectName
+                              ? {
+                                    backgroundColor: 'blue',
+                                    color: 'rgba(255, 255, 255, 0.8)',
+                                    contentText: 'Live traces (LightStep) » ',
+                                    linkURL: buildLiveTracesUrl(projectName, operationName).toString(),
+                                }
+                              : {
+                                    backgroundColor: 'rgba(255, 173, 0, 0.8)',
+                                    color: 'black',
+                                    contentText: 'Missing LightStep project name',
+                                    hoverMessage:
+                                        'Click "Set LightStep project" in the toolbar to view links to live traces.',
+                                },
                       }))
                     : []
             )
