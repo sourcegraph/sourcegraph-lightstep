@@ -1,6 +1,6 @@
 {
   "name": "lightstep",
-  "publisher": "sqs",
+  "publisher": "sourcegraph",
   "description": "View live traces on LightStep for OpenTracing spans in your code",
   "license": "Apache",
   "repository": {
