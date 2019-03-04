@@ -12,7 +12,7 @@ Works on [Sourcegraph.com](https://sourcegraph.com) and [self-hosted Sourcegraph
 
 - **Live traces on LightStep** link decoration on lines containing OpenTracing start span calls
 
-![Screenshot](https://user-images.githubusercontent.com/1976/53704644-722bdf00-3e59-11e9-9e9a-7c4784967036.png)
+![Screenshot](https://storage.googleapis.com/sourcegraph-assets/LightStep_Sourcegraph.png)
 
 ## Usage
 
