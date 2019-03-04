@@ -5,6 +5,12 @@
     "module": "esnext",
     "moduleResolution": "node",
     "lib": ["es2018", "webworker"],
+    "inlineSources": true,
+    "inlineSourceMap": true,
+    "outDir": "dist",
+    "rootDir": "src",
+    "noEmit": true,
+    "declaration": false,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true
   }
