@@ -1,7 +1,7 @@
 {
   "name": "lightstep",
   "publisher": "sqs",
-  "description": "Links OpenTracing instrumentation calls to LightStep live trace views",
+  "description": "View live traces on LightStep for OpenTracing spans in your code",
   "license": "Apache",
   "repository": {
     "type": "git",
