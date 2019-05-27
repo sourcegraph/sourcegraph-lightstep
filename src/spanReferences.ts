@@ -15,7 +15,7 @@ export interface SpanReference {
     line: number
 }
 
-const START_SPAN_PATTERN = /start_?span\(['"]([^'"]+)['"]/gi
+const START_SPAN_PATTERN = /(?:start_?span|trace(?:promise|observable|span))\w*\(['"]([^'"]+)['"]/gi
 
 /**
  * Finds references to OpenTracing spans in the document, using heuristics to match function calls
