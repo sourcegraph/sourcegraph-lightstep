@@ -19,7 +19,7 @@ Works on [Sourcegraph.com](https://sourcegraph.com) and [self-hosted Sourcegraph
 1. Enable the `sourcegraph/lightstep` extension:
    - On Sourcegraph.com, visit [https://sourcegraph.com/extensions/sourcegraph/lightstep](https://sourcegraph.com/extensions/sourcegraph/lightstep) to enable it.
    - On a self-hosted Sourcegraph instance, select **User menu > Extensions**, search for `sourcegraph/lightstep`, and enable it.
-1. Visit any code file containing an OpenTracing start span call.
+1. Visit any code file containing an OpenTracing start span call. (If the extension needs configuration, it will say so on lines containing OpenTracing calls and in the file header.)
 1. Click on the **Live traces (LightStep)** link that appears at the end of the line of each OpenTracing start span call to open the LightStep live traces page for that operation.
 
 ## Roadmap
