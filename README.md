@@ -24,6 +24,7 @@ Works on [Sourcegraph.com](https://sourcegraph.com) and [self-hosted Sourcegraph
 
 ## Roadmap
 
+- Support more patterns for OpenTracing span starts. The current regexp for matching these is quite simple.
 - Add at-a-glance summary about a span in a hover message.
 - Display all spans in the current file, tree, and repository.
 - Support usage in the [Sourcegraph browser extension](https://docs.sourcegraph.com/integration/browser_extension).
