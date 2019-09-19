@@ -20,6 +20,13 @@ export function activate(ctx: sourcegraph.ExtensionContext): void {
             }
         })
     )
+    ctx.subscriptions.add(
+        sourcegraph.app.activeWindowChanges.subscribe(activeWindow => {
+            if (activeWindow && activeWindow.activeViewComponent) {
+                decorateEditors([activeWindow.activeViewComponent])
+            }
+        })
+    )
 
     ctx.subscriptions.add(
         sourcegraph.configuration.subscribe(() => {
