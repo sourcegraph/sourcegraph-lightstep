@@ -95,11 +95,16 @@
       ".ts"
     ]
   },
+  "mocha": {
+    "recursive": true,
+    "timeout": 200,
+    "watch-extensions": ["ts"]
+  },
   "scripts": {
     "tslint": "tslint -p tsconfig.json './src/**/*.ts'",
     "typecheck": "tsc -p tsconfig.json",
-    "test": "TS_NODE_COMPILER_OPTIONS='{\"module\":\"commonjs\"}' mocha --require ts-node/register --require source-map-support/register --opts mocha.opts",
-    "cover": "TS_NODE_COMPILER_OPTIONS='{\"module\":\"commonjs\"}' nyc --require ts-node/register --require source-map-support/register --all mocha --opts mocha.opts --timeout 10000",
+    "test": "TS_NODE_COMPILER_OPTIONS='{\"module\":\"commonjs\"}' mocha --require ts-node/register --require source-map-support/register --package package.json src/**/*.test.ts",
+    "cover": "TS_NODE_COMPILER_OPTIONS='{\"module\":\"commonjs\"}' nyc --require ts-node/register --require source-map-support/register --all mocha --timeout --package package.json 10000 src/**/*.test.ts",
     "build": "parcel build --no-minify --out-file extension.js src/extension.ts",
     "serve": "parcel serve --no-hmr --out-file extension.js src/extension.ts",
     "watch:typecheck": "tsc -p tsconfig.json -w",
