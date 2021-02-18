@@ -10,20 +10,14 @@ export function activate(ctx: sourcegraph.ExtensionContext): void {
     ctx.subscriptions.add(sourcegraph.commands.registerCommand('lightstep.setProjectName', setProjectName))
 
     ctx.subscriptions.add(
-        sourcegraph.workspace.onDidOpenTextDocument.subscribe(textDocument => {
-            if (sourcegraph.app.activeWindow) {
-                decorateEditors(
-                    sourcegraph.app.activeWindow.visibleViewComponents.filter(
-                        viewComp => viewComp.document.uri === textDocument.uri
-                    )
-                )
-            }
-        })
-    )
-    ctx.subscriptions.add(
         sourcegraph.app.activeWindowChanges.subscribe(activeWindow => {
-            if (activeWindow && activeWindow.activeViewComponent) {
-                decorateEditors([activeWindow.activeViewComponent])
+            const subscription = activeWindow?.activeViewComponentChanges.subscribe(viewComponent => {
+                if (!!viewComponent && viewComponent.type === 'CodeEditor') {
+                    decorateEditors([viewComponent])
+                }
+            })
+            if (subscription) {
+                ctx.subscriptions.add(subscription)
             }
         })
     )
@@ -31,7 +25,11 @@ export function activate(ctx: sourcegraph.ExtensionContext): void {
     ctx.subscriptions.add(
         sourcegraph.configuration.subscribe(() => {
             if (sourcegraph.app.activeWindow) {
-                decorateEditors(sourcegraph.app.activeWindow.visibleViewComponents)
+                decorateEditors(
+                    sourcegraph.app.activeWindow.visibleViewComponents.filter(
+                        (viewComponent): viewComponent is sourcegraph.CodeEditor => viewComponent.type === 'CodeEditor'
+                    )
+                )
             }
         })
     )
@@ -40,7 +38,7 @@ export function activate(ctx: sourcegraph.ExtensionContext): void {
         const projectName = sourcegraph.configuration.get().value['lightstep.projectName']
         const hideSpanReferences = sourcegraph.configuration.get().value['lightstep.hideSpanReferences']
         for (const editor of editorsToUpdate) {
-            const spanReferences = findSpanReferences(editor.document.text)
+            const spanReferences = findSpanReferences(editor.document.text ?? '')
             editor.setDecorations(
                 DECORATION_TYPE,
                 !hideSpanReferences
