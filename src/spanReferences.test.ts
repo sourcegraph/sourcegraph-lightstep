@@ -15,9 +15,15 @@ describe('findSpanReferences', () => {
         ]))
 
     it('finds multiple matches', () =>
-        expect(findSpanReferences('x\n1 startSpan("aa") 2\ny\nstart_span(\'bb\')\nz')).toEqual([
+        expect(
+            findSpanReferences(
+                'x\n1 startSpan("aa") 2\ny\nstart_span(\'bb\')\nz\n' +
+                    'span, _ := opentracing.StartSpanFromContext(ctx, "cc") defer span.Finish()'
+            )
+        ).toEqual([
             { operationName: 'aa', line: 1 },
             { operationName: 'bb', line: 3 },
+            { operationName: 'cc', line: 5 },
         ]))
 
     it('finds multiple matches per line', () =>
